@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+option go_package = "./pb";
+
+package pb;
+
+service User {
+  // 注册
+  rpc Register(RegisterArgs) returns (RegisterReply) {}
+  // 登录
+  rpc Login(LoginArgs) returns (LoginReply) {}
+}
+
+message RegisterArgs {
+  string Account = 1; // 账号
+  string Password = 2; // 密码
+  string ClientIP = 3; // 客户端IP地址
+}
+
+message RegisterReply {
+  
+}
+
+message LoginArgs {
+  string Account = 1; // 账号
+  string Password = 2; // 密码
+  string ClientIP = 3; // 客户端IP地址
+}
+
+message LoginReply {
+  string Gate = 1; // 网关
+  string Token = 2; // Token
+}
