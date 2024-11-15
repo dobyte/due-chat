@@ -11,7 +11,7 @@ import (
 	"github.com/dobyte/due/v2/cluster/mesh"
 	"github.com/dobyte/due/v2/errors"
 	"github.com/dobyte/due/v2/log"
-	"github.com/dobyte/due/v2/utils/xrand"
+	"github.com/dobyte/due/v2/utils/xconv"
 	"github.com/dobyte/due/v2/utils/xtime"
 	"github.com/dobyte/jwt"
 	"golang.org/x/crypto/bcrypt"
@@ -25,6 +25,8 @@ type Server struct {
 	jwt     *jwtcomp.JWT
 	userDao *userdao.User
 }
+
+const defaultGate = "ws://127.0.0.1:3533"
 
 func NewServer(proxy *mesh.Proxy) *Server {
 	return &Server{
@@ -40,7 +42,35 @@ func (s *Server) Init() {
 
 // Register 注册
 func (s *Server) Register(ctx context.Context, args *pb.RegisterArgs) (*pb.RegisterReply, error) {
+	user, err := s.doQueryUserByAccount(ctx, args.Account)
+	if err != nil {
+		return nil, err
+	}
 
+	if user != nil {
+		return nil, errors.NewError(code.AccountExists)
+	}
+
+	password, err := bcrypt.GenerateFromPassword([]byte(args.Password), bcrypt.DefaultCost)
+	if err != nil {
+		log.Errorf("generate password failed:%v", err)
+		return nil, errors.NewError(err, code.InternalError)
+	}
+
+	_, err = s.userDao.Insert(ctx, &model.User{
+		Account:     args.Account,
+		Password:    xconv.String(password),
+		RegisterAt:  xtime.Now(),
+		RegisterIP:  args.ClientIP,
+		LastLoginAt: xtime.Now(),
+		LastLoginIP: args.ClientIP,
+	})
+	if err != nil {
+		log.Errorf("insert user failed: %v", err)
+		return nil, errors.NewError(err, code.InternalError)
+	}
+
+	return &pb.RegisterReply{}, nil
 }
 
 // Login 登录
@@ -69,8 +99,24 @@ func (s *Server) Login(ctx context.Context, args *pb.LoginArgs) (*pb.LoginReply,
 	}
 
 	return &pb.LoginReply{
+		Gate:  defaultGate,
 		Token: token.Token,
 	}, nil
+}
+
+// ValidateToken 验证Token
+func (s *Server) ValidateToken(ctx context.Context, args *pb.ValidateTokenArgs) (*pb.ValidateTokenReply, error) {
+	identity, err := s.jwt.ExtractIdentity(args.Token)
+	if err != nil {
+		return nil, errors.NewError(err, code.Unauthorized)
+	}
+
+	uid := xconv.Int64(identity)
+	if uid <= 0 {
+		return nil, errors.NewError(err, code.Unauthorized)
+	}
+
+	return &pb.ValidateTokenReply{UID: uid}, nil
 }
 
 // 根据账号查询用户信息
@@ -102,14 +148,5 @@ func (s *Server) doUpdateUserLastLoginInfo(ctx context.Context, uid int64, clien
 	})
 	if err != nil {
 		log.Errorf("update login info failed: %v", err)
-	}
-}
-
-// 分配网关
-func (s *Server) doAssignGate() string {
-	if opts := server.GetOpts(); len(opts.Gates) > 0 {
-		return opts.Gates[xrand.Int(0, len(opts.Gates)-1)]
-	} else {
-		return ""
 	}
 }

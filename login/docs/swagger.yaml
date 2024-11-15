@@ -1,0 +1,100 @@
+basePath: /
+definitions:
+  api.LoginReq:
+    properties:
+      account:
+        description: 账号
+        type: string
+      password:
+        description: 密码
+        type: string
+    required:
+    - account
+    - password
+    type: object
+  api.LoginRes:
+    properties:
+      gate:
+        description: 网关
+        type: string
+      token:
+        description: Token
+        type: string
+    type: object
+  api.RegisterReq:
+    properties:
+      account:
+        description: 账号
+        type: string
+      password:
+        description: 密码
+        type: string
+    required:
+    - account
+    - password
+    type: object
+  http.Resp:
+    properties:
+      code:
+        description: 响应码
+        type: integer
+      data:
+        description: 响应数据
+      message:
+        description: 响应消息
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  title: 登录服API文档
+  version: "1.0"
+paths:
+  /login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求参数
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.LoginReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 响应参数
+          schema:
+            allOf:
+            - $ref: '#/definitions/http.Resp'
+            - properties:
+                Data:
+                  $ref: '#/definitions/api.LoginRes'
+              type: object
+      summary: 登录
+      tags:
+      - 登录
+  /register:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求参数
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.RegisterReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 响应参数
+          schema:
+            $ref: '#/definitions/http.Resp'
+      summary: 注册
+      tags:
+      - 注册
+swagger: "2.0"

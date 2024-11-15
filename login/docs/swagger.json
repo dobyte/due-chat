@@ -1,0 +1,155 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "登录服API文档",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/login": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "登录"
+                ],
+                "summary": "登录",
+                "parameters": [
+                    {
+                        "description": "请求参数",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.LoginReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "响应参数",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/http.Resp"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "$ref": "#/definitions/api.LoginRes"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/register": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "注册"
+                ],
+                "summary": "注册",
+                "parameters": [
+                    {
+                        "description": "请求参数",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.RegisterReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "响应参数",
+                        "schema": {
+                            "$ref": "#/definitions/http.Resp"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "api.LoginReq": {
+            "type": "object",
+            "required": [
+                "account",
+                "password"
+            ],
+            "properties": {
+                "account": {
+                    "description": "账号",
+                    "type": "string"
+                },
+                "password": {
+                    "description": "密码",
+                    "type": "string"
+                }
+            }
+        },
+        "api.LoginRes": {
+            "type": "object",
+            "properties": {
+                "gate": {
+                    "description": "网关",
+                    "type": "string"
+                },
+                "token": {
+                    "description": "Token",
+                    "type": "string"
+                }
+            }
+        },
+        "api.RegisterReq": {
+            "type": "object",
+            "required": [
+                "account",
+                "password"
+            ],
+            "properties": {
+                "account": {
+                    "description": "账号",
+                    "type": "string"
+                },
+                "password": {
+                    "description": "密码",
+                    "type": "string"
+                }
+            }
+        },
+        "http.Resp": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应码",
+                    "type": "integer"
+                },
+                "data": {
+                    "description": "响应数据"
+                },
+                "message": {
+                    "description": "响应消息",
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

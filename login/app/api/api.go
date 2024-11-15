@@ -57,7 +57,7 @@ func (a *API) Login(ctx http.Context) error {
 		return ctx.Failure(err)
 	}
 
-	return ctx.Success(&LoginResData{
+	return ctx.Success(&LoginRes{
 		Gate:  reply.Gate,
 		Token: reply.Token,
 	})
@@ -70,8 +70,8 @@ func (a *API) Login(ctx http.Context) error {
 // @Accept json
 // @Produce json
 // @Param request body RegisterReq true "请求参数"
-// @Response 200 {object} http.Resp{Data=RegisterRes} "响应参数"
-// @Router /login [post]
+// @Response 200 {object} http.Resp{} "响应参数"
+// @Router /register [post]
 func (a *API) Register(ctx http.Context) error {
 	req := &RegisterReq{}
 
@@ -91,6 +91,7 @@ func (a *API) Register(ctx http.Context) error {
 
 	_, err = client.Register(context.Background(), &userpb.RegisterArgs{
 		Account:  req.Account,
+		Nickname: req.Nickname,
 		Password: req.Password,
 		ClientIP: ctx.IP(),
 	})

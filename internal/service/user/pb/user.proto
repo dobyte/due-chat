@@ -9,12 +9,15 @@ service User {
   rpc Register(RegisterArgs) returns (RegisterReply) {}
   // 登录
   rpc Login(LoginArgs) returns (LoginReply) {}
+  // 验证Token
+  rpc ValidateToken(ValidateTokenArgs) returns (ValidateTokenReply) {}
 }
 
 message RegisterArgs {
   string Account = 1; // 账号
-  string Password = 2; // 密码
-  string ClientIP = 3; // 客户端IP地址
+  string Nickname = 2; // 昵称
+  string Password = 3; // 密码
+  string ClientIP = 4; // 客户端IP地址
 }
 
 message RegisterReply {
@@ -30,4 +33,12 @@ message LoginArgs {
 message LoginReply {
   string Gate = 1; // 网关
   string Token = 2; // Token
+}
+
+message ValidateTokenArgs {
+  string Token = 1; // Token
+}
+
+message ValidateTokenReply {
+  int64 UID = 1; // 用户ID
 }
