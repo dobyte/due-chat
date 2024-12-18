@@ -6,7 +6,7 @@ mode = "debug"
 timezone = "Local"
 
 [cluster.mesh]
-    # 实例ID，网关集群中唯一。不填写默认自动生成唯一的实例ID
+    # 实例ID，网格集群中唯一。不填写默认自动生成唯一的实例ID
     id = ""
     # 实例名称
     name = "mesh"
@@ -102,6 +102,8 @@ timezone = "Local"
     seqBytes = 4
     # 消息字节数，默认为5000字节
     bufferBytes = 5000
+    # 是否携带服务器时间
+    heartbeatTime = true
 
 [transport.grpc.server]
     # 服务器监听地址

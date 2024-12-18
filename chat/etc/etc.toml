@@ -1,17 +1,19 @@
 # 进程号
-pid = "./run/gate.pid"
+pid = "./run/chat.pid"
 # 开发模式。支持模式：debug、test、release（模式优先级：环境变量 < 配置文件 < 运行参数）
 mode = "debug"
 # 统一时区设置。项目中的时间获取请使用xtime.Now()
 timezone = "Local"
 
-[cluster.gate]
-	# 实例ID，网关集群中唯一。不填写默认自动生成唯一的实例ID
+[cluster.node]
+	# 实例ID，节点集群中唯一。不填写默认自动生成唯一的实例ID
 	id = ""
 	# 实例名称
-	name = "gate"
+	name = "chat"
 	# 内建RPC服务器监听地址。不填写默认随机监听
 	addr = ":0"
+	# 编解码器。可选：json | proto。默认json
+	codec = "json"
 	# RPC调用超时时间，支持单位：纳秒（ns）、微秒（us | µs）、毫秒（ms）、秒（s）、分（m）、小时（h）、天（d）。默认为3s
 	timeout = "3s"
 
@@ -38,33 +40,6 @@ timezone = "Local"
 	callerFullPath = true
 	# 是否启用分级存储
 	classifiedStorage = false
-
-[packet]
-    # 字节序，默认为big。可选：little | big
-    byteOrder = "big"
-    # 路由字节数，默认为2字节
-    routeBytes = 4
-    # 序列号字节数，默认为2字节
-    seqBytes = 4
-    # 消息字节数，默认为5000字节
-    bufferBytes = 5000
-	# 是否携带服务器时间
-	heartbeatTime = true
-
-[locate.redis]
-	# 客户端连接地址
-	addrs = ["127.0.0.1:6379"]
-	# 数据库号
-	db = 0
-	# 用户名
-	username = ""
-	# 密码
-	password = ""
-	# 最大重试次数
-	maxRetries = 3
-	# key前缀
-	prefix = "due"
-
 
 [registry.nacos]
 	# 服务器地址 [scheme://]ip:port[/nacos]。默认为["http://127.0.0.1:8848/nacos"]
@@ -98,46 +73,40 @@ timezone = "Local"
 	# 日志输出级别，可选：debug、info、warn、error。默认为info
 	logLevel = "info"
 
-[network.ws.server]
-	# 服务器监听地址
-	addr = ":3533"
-	# 客户端连接路径
-	path = "/"
-	# 服务器最大连接数
-	maxConnNum = 5000
-	# 秘钥文件
-	keyFile = ""
+[locate.redis]
+	# 客户端连接地址
+	addrs = ["127.0.0.1:6379"]
+	# 数据库号
+	db = 0
+	# 用户名
+	username = ""
+	# 密码
+	password = ""
+	# 最大重试次数
+	maxRetries = 3
+	# key前缀
+	prefix = "due"
+
+[task]
+	# 任务池大小(goroutine)
+	size = 1000
+	# 是否非阻塞
+	nonblocking = true
+	# 是否禁用清除。
+	disablePurge = true
+
+[packet]
+	# 字节序，默认为big。可选：little | big
+	byteOrder = "big"
+	# 路由字节数，默认为2字节
+	routeBytes = 4
+	# 序列号字节数，默认为2字节
+	seqBytes = 4
+	# 消息字节数，默认为5000字节
+	bufferBytes = 5000
+
+[transport.grpc.client]
 	# 证书文件
 	certFile = ""
-	# 跨域检测，空数组时不允许任何连接升级成websocket，未设置此参数时允许所有的链接升级成websocket
-	origins = ["*"]
-	# 握手超时时间，支持单位：纳秒（ns）、微秒（us | µs）、毫秒（ms）、秒（s）、分（m）、小时（h）、天（d）。默认为10s
-	handshakeTimeout = "10s"
-	# 心跳检测间隔时间。设置为0则不启用心跳检测，支持单位：纳秒（ns）、微秒（us | µs）、毫秒（ms）、秒（s）、分（m）、小时（h）、天（d）。默认为10s
-	heartbeatInterval = "10s"
-	# 心跳机制，默认为resp响应式心跳。可选：resp 响应式心跳 | tick 定时主推心跳
-	heartbeatMechanism = "resp"
-
-[jwt.default]
-	# jwt发行方
-	issuer = "chat"
-	# 过期时间
-	validDuration = 7200
-	# 秘钥KEY
-	secretKey = "343434"
-	# 身份认证KEY
-	identityKey = "uid"
-	# TOKEN查找位置
-	locations = "query:token"
-	# 存储组件
-	[jwt.default.store]
-		# 客户端连接地址
-		addrs = ["127.0.0.1:6379"]
-		# 数据库号
-		db = 3
-		# 用户名
-		username = ""
-		# 密码
-		password = ""
-		# 最大重试次数
-		maxRetries = 3
+	# 证书域名
+	serverName = ""
