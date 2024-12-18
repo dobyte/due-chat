@@ -11,6 +11,8 @@ service User {
   rpc Login(LoginArgs) returns (LoginReply) {}
   // 验证Token
   rpc ValidateToken(ValidateTokenArgs) returns (ValidateTokenReply) {}
+  // 拉取用户
+  rpc FetchUser(FetchUserArgs) returns (FetchUserReply) {}
 }
 
 message RegisterArgs {
@@ -41,4 +43,22 @@ message ValidateTokenArgs {
 
 message ValidateTokenReply {
   int64 UID = 1; // 用户ID
+}
+
+message FetchUserArgs {
+  int64 UID = 1; // 用户ID
+}
+
+message FetchUserReply {
+  UserInfo User = 1; // 用户
+}
+
+message UserInfo {
+  int64 UID = 1; // 用户ID
+  string Account = 2; // 用户账号
+  string Nickname = 3; // 用户昵称
+  string RegisterAt = 4; // 注册时间
+  string RegisterIP = 5; // 注册IP
+  string LastLoginAt = 6; // 最新登录时间
+  string LastLoginIP = 7; // 最新登录IP
 }

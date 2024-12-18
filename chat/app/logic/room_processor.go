@@ -30,14 +30,33 @@ func (p *roomProcessor) Kind() string {
 
 // Init 初始化处理器
 func (p *roomProcessor) Init() {
+	// 解散聊天室
+	p.actor.AddRouteHandler(route.DismissRoom, p.dismissRoom)
 	// 进入聊天室
 	p.actor.AddRouteHandler(route.EnterRoom, p.enterRoom)
 	// 离开聊天室
 	p.actor.AddRouteHandler(route.LeaveRoom, p.leaveRoom)
 	// 发送消息
 	p.actor.AddRouteHandler(route.SendMessage, p.sendMessage)
-	// 拉取成员
+	// 拉取成员列表
 	p.actor.AddRouteHandler(route.FetchMembers, p.fetchMembers)
+}
+
+// 解散聊天室
+func (p *roomProcessor) dismissRoom(ctx node.Context) {
+	res := &DismissRoomRes{}
+	ctx.Defer(func() {
+		if err := ctx.Response(res); err != nil {
+			log.Errorf("response message failed: %v", err)
+		}
+	})
+
+	if err := p.room.doDismissRoom(ctx.UID()); err != nil {
+		res.Code = codes.Convert(err).Code()
+		return
+	}
+
+	res.Code = code.OK.Code()
 }
 
 // 进入聊天室
@@ -55,11 +74,31 @@ func (p *roomProcessor) enterRoom(ctx node.Context) {
 		res.Code = code.InternalError.Code()
 		return
 	}
+
+	if err := p.room.doEnterRoom(ctx.UID()); err != nil {
+		res.Code = codes.Convert(err).Code()
+		return
+	}
+
+	res.Code = code.OK.Code()
+	res.Data = &EnterRoomResData{Room: p.room.doMakeRoomInfo()}
 }
 
 // 进入聊天室
 func (p *roomProcessor) leaveRoom(ctx node.Context) {
+	res := &LeaveRoomRes{}
+	ctx.Defer(func() {
+		if err := ctx.Response(res); err != nil {
+			log.Errorf("response message failed: %v", err)
+		}
+	})
 
+	if err := p.room.doLeaveRoom(ctx.UID()); err != nil {
+		res.Code = codes.Convert(err).Code()
+		return
+	}
+
+	res.Code = code.OK.Code()
 }
 
 // 发送消息
@@ -78,16 +117,29 @@ func (p *roomProcessor) sendMessage(ctx node.Context) {
 		return
 	}
 
-	member, ok := p.room.manager.GetMember(ctx.UID())
-	if !ok {
-		res.Code = code.IllegalOperation.Code()
-		return
-	}
-
-	if err := p.room.SendMessage(ctx.Context(), member, req.Content); err != nil {
+	if err := p.room.doSendMessage(ctx.UID(), req.Content); err != nil {
 		res.Code = codes.Convert(err).Code()
 		return
 	}
 
 	res.Code = code.OK.Code()
+}
+
+// 拉取成员列表
+func (p *roomProcessor) fetchMembers(ctx node.Context) {
+	res := &FetchMembersRes{}
+	ctx.Defer(func() {
+		if err := ctx.Response(res); err != nil {
+			log.Errorf("response message failed: %v", err)
+		}
+	})
+
+	list, err := p.room.fetchMembers()
+	if err != nil {
+		res.Code = codes.Convert(err).Code()
+		return
+	}
+
+	res.Code = code.OK.Code()
+	res.Data = &FetchMembersResData{List: list}
 }

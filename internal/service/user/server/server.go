@@ -60,6 +60,7 @@ func (s *Server) Register(ctx context.Context, args *pb.RegisterArgs) (*pb.Regis
 	_, err = s.userDao.Insert(ctx, &model.User{
 		Account:     args.Account,
 		Password:    xconv.String(password),
+		Nickname:    args.Nickname,
 		RegisterAt:  xtime.Now(),
 		RegisterIP:  args.ClientIP,
 		LastLoginAt: xtime.Now(),
@@ -117,6 +118,43 @@ func (s *Server) ValidateToken(ctx context.Context, args *pb.ValidateTokenArgs) 
 	}
 
 	return &pb.ValidateTokenReply{UID: uid}, nil
+}
+
+// FetchUser 拉取用户
+func (s *Server) FetchUser(ctx context.Context, args *pb.FetchUserArgs) (*pb.FetchUserReply, error) {
+	user, err := s.doQueryUserByUID(ctx, args.UID)
+	if err != nil {
+		return nil, err
+	}
+
+	if user == nil {
+		return nil, errors.NewError(code.NotFoundUser)
+	}
+
+	return &pb.FetchUserReply{User: &pb.UserInfo{
+		UID:         user.ID,
+		Account:     user.Account,
+		Nickname:    user.Nickname,
+		RegisterAt:  user.RegisterAt.Format(xtime.DateTime),
+		RegisterIP:  user.RegisterIP,
+		LastLoginAt: user.LastLoginAt.Format(xtime.DateTime),
+		LastLoginIP: user.LastLoginIP,
+	}}, nil
+}
+
+// 根据用户ID查询用户信息
+func (s *Server) doQueryUserByUID(ctx context.Context, uid int64) (*model.User, error) {
+	user, err := s.userDao.FindOne(ctx, func(cols *userdao.Columns) interface{} {
+		return map[string]interface{}{
+			cols.ID: uid,
+		}
+	})
+	if err != nil {
+		log.Errorf("find user failed, uid = %s err = %v", uid, err)
+		return nil, errors.NewError(err, code.InternalError)
+	}
+
+	return user, nil
 }
 
 // 根据账号查询用户信息

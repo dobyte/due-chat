@@ -91,8 +91,8 @@ func (a *API) Register(ctx http.Context) error {
 
 	_, err = client.Register(context.Background(), &userpb.RegisterArgs{
 		Account:  req.Account,
-		Nickname: req.Nickname,
 		Password: req.Password,
+		Nickname: req.Nickname,
 		ClientIP: ctx.IP(),
 	})
 	if err != nil {

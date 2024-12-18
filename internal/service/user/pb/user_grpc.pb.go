@@ -22,6 +22,7 @@ const (
 	User_Register_FullMethodName      = "/pb.User/Register"
 	User_Login_FullMethodName         = "/pb.User/Login"
 	User_ValidateToken_FullMethodName = "/pb.User/ValidateToken"
+	User_FetchUser_FullMethodName     = "/pb.User/FetchUser"
 )
 
 // UserClient is the client API for User service.
@@ -34,6 +35,8 @@ type UserClient interface {
 	Login(ctx context.Context, in *LoginArgs, opts ...grpc.CallOption) (*LoginReply, error)
 	// 验证Token
 	ValidateToken(ctx context.Context, in *ValidateTokenArgs, opts ...grpc.CallOption) (*ValidateTokenReply, error)
+	// 拉取用户
+	FetchUser(ctx context.Context, in *FetchUserArgs, opts ...grpc.CallOption) (*FetchUserReply, error)
 }
 
 type userClient struct {
@@ -74,6 +77,16 @@ func (c *userClient) ValidateToken(ctx context.Context, in *ValidateTokenArgs, o
 	return out, nil
 }
 
+func (c *userClient) FetchUser(ctx context.Context, in *FetchUserArgs, opts ...grpc.CallOption) (*FetchUserReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(FetchUserReply)
+	err := c.cc.Invoke(ctx, User_FetchUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServer is the server API for User service.
 // All implementations must embed UnimplementedUserServer
 // for forward compatibility
@@ -84,6 +97,8 @@ type UserServer interface {
 	Login(context.Context, *LoginArgs) (*LoginReply, error)
 	// 验证Token
 	ValidateToken(context.Context, *ValidateTokenArgs) (*ValidateTokenReply, error)
+	// 拉取用户
+	FetchUser(context.Context, *FetchUserArgs) (*FetchUserReply, error)
 	mustEmbedUnimplementedUserServer()
 }
 
@@ -99,6 +114,9 @@ func (UnimplementedUserServer) Login(context.Context, *LoginArgs) (*LoginReply, 
 }
 func (UnimplementedUserServer) ValidateToken(context.Context, *ValidateTokenArgs) (*ValidateTokenReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ValidateToken not implemented")
+}
+func (UnimplementedUserServer) FetchUser(context.Context, *FetchUserArgs) (*FetchUserReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FetchUser not implemented")
 }
 func (UnimplementedUserServer) mustEmbedUnimplementedUserServer() {}
 
@@ -167,6 +185,24 @@ func _User_ValidateToken_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _User_FetchUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FetchUserArgs)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).FetchUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: User_FetchUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).FetchUser(ctx, req.(*FetchUserArgs))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // User_ServiceDesc is the grpc.ServiceDesc for User service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -185,6 +221,10 @@ var User_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ValidateToken",
 			Handler:    _User_ValidateToken_Handler,
+		},
+		{
+			MethodName: "FetchUser",
+			Handler:    _User_FetchUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
