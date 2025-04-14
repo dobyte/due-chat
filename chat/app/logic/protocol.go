@@ -51,6 +51,14 @@ type FetchMembersResData struct {
 	List []*MemberInfo `json:"list"` // 成员列表
 }
 
+type FetchRoomsRes struct {
+	Code int                `json:"code"` // 响应码
+	Data *FetchRoomsResData `json:"data,omitempty"`
+}
+
+type FetchRoomsResData struct {
+	List []*RoomInfo `json:"list"` // 房间列表
+}
 type SendMessageReq struct {
 	Content string `json:"content"` // 发送内容
 }

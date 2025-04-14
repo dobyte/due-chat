@@ -2,11 +2,12 @@ package logic
 
 import (
 	"context"
+	"sync"
+
 	"github.com/dobyte/due-chat/internal/code"
 	usersvc "github.com/dobyte/due-chat/internal/service/user/client"
 	userpb "github.com/dobyte/due-chat/internal/service/user/pb"
 	"github.com/dobyte/due/v2/errors"
-	"sync"
 )
 
 type User struct {
@@ -48,6 +49,10 @@ func (u *User) doGetRoom() *Room {
 func (u *User) doSaveRoom(room *Room) error {
 	u.rw.Lock()
 	defer u.rw.Unlock()
+
+	if u.room != nil && u.room.id == room.id {
+		return nil
+	}
 
 	if u.room != nil {
 		return errors.NewError(code.IllegalOperation)
