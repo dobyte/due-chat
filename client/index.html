@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>聊天界面</title>
+    <script src="https://unpkg.com/axios@1.6.2/dist/axios.min.js"></script>
+    <style>
+        .chat-container {
+            width: 800px;
+            margin: 100px auto;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            display: flex;
+        }
+
+        .sidebar {
+            width: 250px;
+            border-right: 1px solid #dcdfe6;
+            padding: 20px;
+        }
+
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+
+        .chat-header {
+            padding: 15px;
+            border-bottom: 1px solid #dcdfe6;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f5f7fa;
+        }
+
+        .chat-input {
+            padding: 15px;
+            border-top: 1px solid #dcdfe6;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .message.right {
+            flex-direction: row-reverse;
+        }
+
+        .message-content {
+            margin: 0 10px;
+            padding: 10px;
+            border-radius: 4px;
+            background: #fff;
+            max-width: 70%;
+        }
+
+        .message.right .message-content {
+            background: #409EFF;
+            color: white;
+        }
+
+        .online-status {
+            color: #67C23A;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 4px;
+            border: 1px solid #dcdfe6;
+            height: 100%;
+        }
+
+        .card-header {
+            padding: 15px;
+            border-bottom: 1px solid #dcdfe6;
+        }
+
+        .flex-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 10px;
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .flex-row>div {
+            flex: 0 1 auto;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .flex-row .btn-small {
+            flex: 0 0 auto;
+            min-width: 40px;
+            padding: 3px 8px;
+            margin-left: 5px;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .btn-primary {
+            background: #409EFF;
+            color: white;
+        }
+
+        .btn-small {
+            background: #409EFF;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .room-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .room-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .room-item:hover {
+            background: #f5f7fa;
+        }
+
+        .dialog {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dialog-content {
+            background: #fff;
+            padding: 20px;
+            border-radius: 4px;
+            width: 400px;
+        }
+
+        .dialog-header {
+            margin-bottom: 20px;
+        }
+
+        .form-item {
+            margin-bottom: 15px;
+        }
+
+        .form-item label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-item input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+        }
+
+        .dialog-footer {
+            text-align: right;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <div class="chat-container">
+            <div class="sidebar">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="flex-row" style="justify-content: space-between;">
+                            <div style="display: flex; align-items: center; flex: 1;">
+                                <img class="avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+                                    alt="avatar">
+                                <div style="margin-left: 10px;">
+                                    <div id="userName">未登录</div>
+                                    <div class="online-status" id="onlineStatus">离线</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 10px; flex: 1; justify-content: flex-end;">
+                                <button class="btn btn-small" id="loginBtn">登录</button>
+                                <button class="btn btn-small" id="registerBtn">注册</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="padding: 15px;">
+                        <div class="flex-row">
+                            <div>房间列表(<span id="roomCount">0</span>)</div>
+                            <button class="btn btn-primary" style="margin-left: auto;" id="createRoomBtn">创建房间</button>
+                        </div>
+                        <ul class="room-list" id="roomList"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-main">
+                <div class="chat-messages" id="chatMessages"></div>
+                <div class="chat-input">
+                    <input type="text" id="messageInput" placeholder="请输入内容"
+                        style="width: calc(100% - 100px); padding: 8px; border: 1px solid #dcdfe6; border-radius: 4px;">
+                    <button class="btn btn-primary" style="margin-left: 10px;" id="sendBtn">发送</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 登录对话框 -->
+        <div class="dialog" id="loginDialog">
+            <div class="dialog-content">
+                <div class="dialog-header">登录</div>
+                <form id="loginForm">
+                    <div class="form-item">
+                        <label>用户名</label>
+                        <input type="text" id="accountInput" placeholder="请输入用户名">
+                    </div>
+                    <div class="form-item">
+                        <label>密码</label>
+                        <input type="password" id="passwordInput" placeholder="请输入密码">
+                    </div>
+                    <div class="dialog-footer">
+                        <button type="button" class="btn" id="loginCancelBtn">取消</button>
+                        <button type="submit" class="btn btn-primary" style="margin-left: 10px;">确定</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 创建房间对话框 -->
+        <div class="dialog" id="createRoomDialog">
+            <div class="dialog-content">
+                <div class="dialog-header">创建房间</div>
+                <form id="createRoomForm">
+                    <div class="form-item">
+                        <label>房间名称</label>
+                        <input type="text" id="roomNameInput" placeholder="请输入房间名称">
+                    </div>
+                    <div class="dialog-footer">
+                        <button type="button" class="btn" id="createRoomCancelBtn">取消</button>
+                        <button type="submit" class="btn btn-primary" style="margin-left: 10px;">确定</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 注册对话框 -->
+        <div class="dialog" id="registerDialog">
+            <div class="dialog-content">
+                <div class="dialog-header">注册</div>
+                <form id="registerForm">
+                    <div class="form-item">
+                        <label>用户名</label>
+                        <input type="text" id="registerAccountInput" placeholder="请输入用户名">
+                    </div>
+                    <div class="form-item">
+                        <label>密码</label>
+                        <input type="password" id="registerPasswordInput" placeholder="请输入密码">
+                    </div>
+                    <div class="dialog-footer">
+                        <button type="button" class="btn" id="registerCancelBtn">取消</button>
+                        <button type="submit" class="btn btn-primary" style="margin-left: 10px;">确定</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { Client, Packer } from 'https://unpkg.com/due-client@1.0.1/dist/index.esm.js'
+
+        const IPADDR = "192.168.52.208";
+        axios.defaults.baseURL = `http://${IPADDR}:8099`;
+
+        const room_avatars = [
+            'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
+            'https://api.dicebear.com/7.x/avataaars/svg?seed=Mike'
+        ];
+
+        const ValidateToken = 1000;
+        const CreateRoom = 1001;
+        const DismissRoom = 1002;
+        const EnterRoom = 1003;
+        const LeaveRoom = 1004;
+        const SendMessage = 1005;
+        const FetchMembers = 1006;
+        const MessageNotify = 1007;
+        const ListRoom = 1008;
+
+        class ChatApp {
+            constructor() {
+                this.isOnline = false;
+                this.gateUrl = "";
+                this.token = "";
+                this.uid = 0;
+                this.userName = "未登录";
+                this.currentRoomId = null;
+                this.client = null;
+                this.wsInstance = null;
+                this.wsStatus = null;
+                this.rooms = [];
+
+                this.initElements();
+                this.initEventListeners();
+            }
+
+            initElements() {
+                // 获取DOM元素
+                this.loginBtn = document.getElementById('loginBtn');
+                this.registerBtn = document.getElementById('registerBtn');
+                this.createRoomBtn = document.getElementById('createRoomBtn');
+                this.loginDialog = document.getElementById('loginDialog');
+                this.registerDialog = document.getElementById('registerDialog');
+                this.createRoomDialog = document.getElementById('createRoomDialog');
+                this.loginForm = document.getElementById('loginForm');
+                this.registerForm = document.getElementById('registerForm');
+                this.createRoomForm = document.getElementById('createRoomForm');
+                this.loginCancelBtn = document.getElementById('loginCancelBtn');
+                this.registerCancelBtn = document.getElementById('registerCancelBtn');
+                this.createRoomCancelBtn = document.getElementById('createRoomCancelBtn');
+                this.roomList = document.getElementById('roomList');
+                this.chatMessages = document.getElementById('chatMessages');
+                this.messageInput = document.getElementById('messageInput');
+                this.sendBtn = document.getElementById('sendBtn');
+            }
+
+            initEventListeners() {
+                // 添加事件监听
+                this.loginBtn.addEventListener('click', () => this.showLoginDialog());
+                this.registerBtn.addEventListener('click', () => this.showRegisterDialog());
+                this.createRoomBtn.addEventListener('click', () => this.showCreateRoomDialog());
+                this.loginForm.addEventListener('submit', (e) => this.handleLogin(e));
+                this.registerForm.addEventListener('submit', (e) => this.handleRegister(e));
+                this.createRoomForm.addEventListener('submit', (e) => this.handleCreateRoom(e));
+                this.loginCancelBtn.addEventListener('click', () => this.hideLoginDialog());
+                this.registerCancelBtn.addEventListener('click', () => this.hideRegisterDialog());
+                this.createRoomCancelBtn.addEventListener('click', () => this.hideCreateRoomDialog());
+                this.sendBtn.addEventListener('click', () => this.sendMessage());
+            }
+
+            showLoginDialog() {
+                this.loginDialog.style.display = 'flex';
+            }
+
+            hideLoginDialog() {
+                this.loginDialog.style.display = 'none';
+            }
+
+            showCreateRoomDialog() {
+                this.createRoomDialog.style.display = 'flex';
+            }
+
+            hideCreateRoomDialog() {
+                this.createRoomDialog.style.display = 'none';
+            }
+
+            async handleLogin(e) {
+                e.preventDefault();
+                const account = document.getElementById('accountInput').value;
+                const password = document.getElementById('passwordInput').value;
+
+                try {
+                    const response = await axios.post('/login', JSON.stringify({
+                        account,
+                        password
+                    }));
+
+                    if (response.data.code === 0) {
+                        this.isOnline = true;
+                        this.gateUrl = response.data.data.gate.replace('127.0.0.1', IPADDR);
+                        this.token = response.data.data.token;
+                        this.uid = response.data.data.uid;
+                        this.userName = account;
+
+                        document.getElementById('userName').textContent = this.userName;
+                        document.getElementById('onlineStatus').textContent = '在线';
+
+                        this.hideLoginDialog();
+                        this.showMessage('登录成功');
+                        this.initClient();
+                    } else {
+                        this.showMessage(response.data.message || '登录失败', 'error');
+                    }
+                } catch (error) {
+                    console.error('登录请求失败:', error);
+                    this.showMessage('登录失败，请检查网络连接', 'error');
+                }
+            }
+
+            async handleCreateRoom(e) {
+                e.preventDefault();
+                const roomName = document.getElementById('roomNameInput').value;
+
+                try {
+                    const result = await this.sendRequest(CreateRoom, {
+                        token: this.token,
+                        name: roomName
+                    });
+
+                    if (result && result.code === 0) {
+                        this.showMessage('创建房间成功');
+                        this.hideCreateRoomDialog();
+                        document.getElementById('roomNameInput').value = '';
+                        this.fetchRoomList();
+                    } else {
+                        this.showMessage(result?.message || '创建房间失败', 'error');
+                    }
+                } catch (error) {
+                    console.error('创建房间失败:', error);
+                    this.showMessage('创建房间失败，请检查网络连接', 'error');
+                }
+            }
+
+            initClient() {
+                if (this.gateUrl === "") return;
+
+                this.client = new Client({
+                    url: `${this.gateUrl}?token=${this.token}`,
+                    heartbeat: 10000,
+                    packer: new Packer({
+                        byteOrder: 'big',
+                        seqBytes: 4,
+                        routeBytes: 4,
+                        bufferBytes: 5000
+                    })
+                });
+
+                this.client.onReceive((c, message) => {
+                    this.onReceive((new TextDecoder).decode(message.buffer));
+                });
+
+                this.client.onDisconnect((c) => {
+                    console.log('disconnect success');
+                });
+
+                this.client.onConnect((c) => {
+                    console.log('connect success');
+                    this.wsInstance = c;
+                    this.validateToken();
+                });
+
+                this.client.connect();
+            }
+
+            async fetchRoomList() {
+                let res = await this.sendRequest(ListRoom, {
+                    token: this.token
+                });
+
+                if (res.code === 0) {
+                    this.rooms = res.data.list.map(item => ({
+                        id: item.id,
+                        name: item.name,
+                        avatar: room_avatars[item.id % 2]
+                    }));
+                    this.updateRoomList();
+                }
+            }
+            async validateToken() {
+                console.log("validateToken");
+                let res = await this.sendRequest(ValidateToken, {
+                    token: this.token
+                });
+                console.log("validateToken1", res);
+                if (res.code === 0) {
+                    this.fetchRoomList();
+                }
+            }
+
+            updateRoomList() {
+                this.roomList.innerHTML = '';
+                document.getElementById('roomCount').textContent = this.rooms.length;
+
+                this.rooms.forEach(room => {
+                    const li = document.createElement('li');
+                    li.className = 'room-item';
+                    li.innerHTML = `
+                        <img class="avatar" src="${room.avatar}" alt="room avatar" style="width: 30px; height: 30px;">
+                        <span style="margin-left: 10px">${room.name}</span>
+                    `;
+                    li.addEventListener('click', () => this.handleEnterRoom(room));
+                    this.roomList.appendChild(li);
+                });
+            }
+
+            async handleEnterRoom(room) {
+                if (!this.isOnline) {
+                    this.showMessage('请先登录', 'error');
+                    return;
+                }
+
+                try {
+                    const result = await this.sendRequest(EnterRoom, {
+                        roomID: room.id
+                    });
+                    console.log("handleEnterRoom", result);
+                    if (result && result.code === 0) {
+                        this.currentRoomId = room.id;
+                        this.showMessage(`进入房间 ${room.name} 成功`);
+                    } else {
+                        this.showMessage(result?.message || '进入房间失败', 'error');
+                    }
+                } catch (error) {
+                    console.error('进入房间失败:', error);
+                    this.showMessage('进入房间失败，请检查网络连接', 'error');
+                }
+            }
+
+            async sendRequest(router, msg, timeout = 20000) {
+                if (this.wsInstance === null) {
+                    this.showMessage('连接异常', 'error');
+                    return null;
+                }
+
+                try {
+                    const jsonBuffer = new TextEncoder().encode(JSON.stringify(msg));
+                    const response = await this.wsInstance.request(router, jsonBuffer, timeout);
+                    const result = JSON.parse((new TextDecoder).decode(response.buffer));
+                    return result;
+                } catch (error) {
+                    console.error('请求失败:', error);
+                    this.showMessage('请求失败', 'error');
+                    return null;
+                }
+            }
+
+            onReceive(msg) {
+                console.log('receive message: ', msg);
+                let msgObj = JSON.parse(msg);
+                const messageElement = document.createElement('div');
+                messageElement.className = `message ${msgObj.sender.uid === this.uid ? 'right' : ''}`;
+
+                // 创建头像元素
+                const avatarElement = document.createElement('img');
+                avatarElement.className = 'avatar';
+                avatarElement.style.width = '30px';
+                avatarElement.style.height = '30px';
+                avatarElement.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${msgObj.sender.uid}`;
+                avatarElement.alt = 'user avatar';
+
+                // 创建消息内容容器
+                const contentContainer = document.createElement('div');
+                contentContainer.style.display = 'flex';
+                contentContainer.style.flexDirection = 'column';
+
+                // 创建用户名元素
+                const userNameElement = document.createElement('div');
+                userNameElement.style.fontSize = '12px';
+                userNameElement.style.color = '#999';
+                userNameElement.style.marginBottom = '4px';
+                userNameElement.textContent = msgObj.sender.uid === this.uid ? '我' : msgObj.sender.nickname || `用户${msgObj.sender.uid}`;
+
+                const messageContent = document.createElement('div');
+                messageContent.className = 'message-content';
+                messageContent.textContent = msgObj.content;
+
+                contentContainer.appendChild(userNameElement);
+                contentContainer.appendChild(messageContent);
+
+                messageElement.appendChild(avatarElement);
+                messageElement.appendChild(contentContainer);
+                this.chatMessages.appendChild(messageElement);
+
+                // 自动滚动到底部
+                this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+            }
+
+            async sendMessage() {
+                const message = this.messageInput.value.trim();
+                if (message && this.currentRoomId) {
+                    // 发送消息的逻辑
+                    this.messageInput.value = '';
+
+                    let result = await this.sendRequest(SendMessage, {
+                        content: message
+                    })
+                    console.log("sendMessage", result);
+                    if (result && result.code !== 0) {
+                        this.showMessage('消息发送失败', 'error');
+                    }
+                }
+            }
+
+            showRegisterDialog() {
+                this.registerDialog.style.display = 'flex';
+            }
+
+            hideRegisterDialog() {
+                this.registerDialog.style.display = 'none';
+            }
+
+            async handleRegister(e) {
+                e.preventDefault();
+                const account = document.getElementById('registerAccountInput').value;
+                const password = document.getElementById('registerPasswordInput').value;
+
+                try {
+                    const response = await axios.post('/register', JSON.stringify({
+                        "account": account,
+                        "nickname": account,
+                        "password": password
+                    }));
+
+                    if (response.data.code === 0) {
+                        this.showMessage('注册成功');
+                        this.hideRegisterDialog();
+                        document.getElementById('registerAccountInput').value = '';
+                        document.getElementById('registerPasswordInput').value = '';
+                    } else {
+                        this.showMessage(response.data.message || '注册失败', 'error');
+                    }
+                } catch (error) {
+                    console.error('注册请求失败:', error);
+                    this.showMessage('注册失败，请检查网络连接', 'error');
+                }
+            }
+
+            showMessage(message, type = 'success') {
+                const messageElement = document.createElement('div');
+                messageElement.textContent = message;
+                messageElement.style.position = 'fixed';
+                messageElement.style.top = '20px';
+                messageElement.style.left = '50%';
+                messageElement.style.transform = 'translateX(-50%)';
+                messageElement.style.padding = '10px 20px';
+                messageElement.style.borderRadius = '4px';
+                messageElement.style.backgroundColor = type === 'success' ? '#67C23A' : '#F56C6C';
+                messageElement.style.color = 'white';
+                messageElement.style.zIndex = '9999';
+
+                document.body.appendChild(messageElement);
+                setTimeout(() => {
+                    document.body.removeChild(messageElement);
+                }, 3000);
+            }
+        }
+
+        // 初始化应用
+        const app = new ChatApp();
+    </script>
+</body>
+
+</html>

@@ -39,6 +39,10 @@ func (c *Core) Init() {
 		group.AddRouteHandler(route.SendMessage, true, c.sendMessage)
 		// 拉取成员列表
 		group.AddRouteHandler(route.FetchMembers, true, c.fetchMembers)
+
+		// 拉取成员列表
+		group.AddRouteHandler(route.ListRoom, false, c.listRoom)
+
 	})
 }
 
@@ -198,4 +202,23 @@ func (c *Core) fetchMembers(ctx node.Context) {
 		log.Errorf("request next failed: %v", err)
 		res.Code = code.IllegalRequest.Code()
 	}
+}
+
+// 查询聊天室
+func (c *Core) listRoom(ctx node.Context) {
+	res := &FetchRoomsRes{}
+	ctx.Defer(func() {
+		if err := ctx.Response(res); err != nil {
+			log.Errorf("response message failed: %v", err)
+		}
+	})
+
+	rooms, err := c.manager.doListRoom(ctx.UID())
+	if err != nil {
+		res.Code = codes.Convert(err).Code()
+		return
+	}
+
+	res.Code = code.OK.Code()
+	res.Data = &FetchRoomsResData{List: rooms}
 }

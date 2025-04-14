@@ -9,4 +9,5 @@ const (
 	SendMessage   int32 = 1005 // 发送消息
 	FetchMembers  int32 = 1006 // 拉取成员
 	MessageNotify int32 = 1007 // 消息通知
+	ListRoom      int32 = 1008 // 查询房间列表
 )

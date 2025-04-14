@@ -2,6 +2,9 @@ package logic
 
 import (
 	"context"
+	"sync"
+	"sync/atomic"
+
 	"github.com/dobyte/due-chat/internal/code"
 	"github.com/dobyte/due/v2/cluster/node"
 	"github.com/dobyte/due/v2/codes"
@@ -9,8 +12,6 @@ import (
 	"github.com/dobyte/due/v2/log"
 	"github.com/dobyte/due/v2/utils/xconv"
 	"golang.org/x/sync/singleflight"
-	"sync"
-	"sync/atomic"
 )
 
 type Manager struct {
@@ -86,7 +87,7 @@ func (m *Manager) doCreateRoom(uid int64, name string) (room *Room, err error) {
 		}
 	}()
 
-	if actor, err = m.proxy.Spawn(newRoomProcessor, node.WithActorID(xconv.String(room.id)), node.WithActorArgs(room)); err != nil {
+	if actor, err = m.proxy.Spawn(newRoomProcessor, node.WithActorID(xconv.String(room.id)), node.WithActorArgs(room), node.WithActorKind("Room")); err != nil {
 		log.Errorf("spawn actor faile: %v", err)
 		return nil, errors.NewError(err, code.InternalError)
 	}
@@ -115,5 +116,15 @@ func (m *Manager) doCreateRoom(uid int64, name string) (room *Room, err error) {
 
 	m.rooms.Store(room.id, room)
 
+	return
+}
+
+// 查询聊天室
+func (m *Manager) doListRoom(uid int64) (rooms []*RoomInfo, err error) {
+	rooms = make([]*RoomInfo, 0)
+	m.rooms.Range(func(key, value interface{}) bool {
+		rooms = append(rooms, value.(*Room).doMakeRoomInfo())
+		return true
+	})
 	return
 }
